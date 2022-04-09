@@ -1,4 +1,6 @@
-require("dotenv-safe").config();
+require("dotenv-safe").config({
+  allowEmptyValues: true,
+});
 import { Strategy } from "passport-github";
 import passport from "passport";
 import jwt from "jsonwebtoken";
