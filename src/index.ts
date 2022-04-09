@@ -145,7 +145,7 @@ const main = async () => {
 
   io.on("connection", (socket: any) => {
     socket.on("message-from-client", (message: string) => {
-      console.log("the fucking message that was sent from the client", message);
+      console.log("the message that was sent from the client", message);
       socket.broadcast.emit("message-from-server", message);
     });
   });
