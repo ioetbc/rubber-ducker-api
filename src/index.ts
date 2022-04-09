@@ -150,7 +150,7 @@ const main = async () => {
     });
   });
 
-  app.listen(3002, () => {
+  app.listen(process.env.PORT || 3002, () => {
     console.log("listening on port 3002");
   });
 };
