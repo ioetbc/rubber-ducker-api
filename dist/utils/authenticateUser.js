@@ -20,7 +20,7 @@ const authenticateUser = (app) => {
     passport_1.default.use(new passport_github_1.Strategy({
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: "/auth/github/callback",
+        callbackURL: "https://ruber-ducker-api.herokuapp.com/auth/github/callback",
     }, async (_, __, profile, done) => {
         let user = await (0, db_1.findUser)({ github_id: profile.id });
         let userId = profile.id;

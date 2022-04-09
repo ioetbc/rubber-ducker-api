@@ -18,7 +18,8 @@ export const authenticateUser = (app: any) => {
       {
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: "/auth/github/callback",
+        callbackURL:
+          "https://ruber-ducker-api.herokuapp.com/auth/github/callback",
       },
       async (_, __, profile: any, done) => {
         let user = await findUser({ github_id: profile.id });
