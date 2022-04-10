@@ -146,12 +146,15 @@ export const reviews = async ({ github_id }: { github_id: string }) => {
           ): {
             github_id: string;
             reviews: string[];
-            averageStarRating: string;
+            averageStarRating: number;
           } => {
             client.release();
             type Type = { review: string; stars: number };
             const reviews = result.rows.map((result: Type) => result.review);
 
+            if (!reviews.length) {
+              return { github_id, reviews, averageStarRating: 3 };
+            }
             const averageStarRating = (
               result.rows
                 .map((row: Type) => row.stars)
@@ -162,7 +165,11 @@ export const reviews = async ({ github_id }: { github_id: string }) => {
                 ) / result.rows.length
             ).toFixed(0);
 
-            return { github_id, reviews, averageStarRating };
+            return {
+              github_id,
+              reviews,
+              averageStarRating: Number(averageStarRating),
+            };
           }
         );
     })
@@ -195,8 +202,8 @@ export const findTeachers = async ({
             )}`.replaceAll(",", " AND ")
         )
         .then(async (result: any) => {
+          console.log("result nefore", result.rows);
           const filterByPrice = result.rows.filter((user: any) => {
-            console.log(user.per_hour_rate);
             return Number(user.per_hour_rate) <= Number(maxTeacherPrice);
           });
 

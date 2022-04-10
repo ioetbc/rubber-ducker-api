@@ -100,10 +100,17 @@ const reviews = async ({ github_id }) => {
             .then((result) => {
             client.release();
             const reviews = result.rows.map((result) => result.review);
+            if (!reviews.length) {
+                return { github_id, reviews, averageStarRating: 3 };
+            }
             const averageStarRating = (result.rows
                 .map((row) => row.stars)
                 .reduce((prevValue, currentValue) => prevValue + currentValue, 0) / result.rows.length).toFixed(0);
-            return { github_id, reviews, averageStarRating };
+            return {
+                github_id,
+                reviews,
+                averageStarRating: Number(averageStarRating),
+            };
         });
     })
         .catch((e) => {
@@ -121,8 +128,8 @@ const findTeachers = async ({ minStarRating, technologies, maxTeacherPrice, }) =
             LEFT JOIN user_metadata ON technologies.github_id = user_metadata.github_id
             WHERE ${technologies.map((technology) => `${technology.type} >= ${technology.proficency}`)}`.replaceAll(",", " AND "))
             .then(async (result) => {
+            console.log("result nefore", result.rows);
             const filterByPrice = result.rows.filter((user) => {
-                console.log(user.per_hour_rate);
                 return Number(user.per_hour_rate) <= Number(maxTeacherPrice);
             });
             const reviewResults = await Promise.all(filterByPrice.map((user) => {

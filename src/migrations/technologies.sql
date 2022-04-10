@@ -1,5 +1,4 @@
 create table technologies (
-	id BIGSERIAL NOT NULL,
 	github_id VARCHAR(50) NOT NULL PRIMARY KEY,
 	javascript INT NOT NULL DEFAULT 0,
 	html INT NOT NULL DEFAULT 0,
