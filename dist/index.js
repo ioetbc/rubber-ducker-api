@@ -10,13 +10,15 @@ const db_1 = require("./utils/db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cors_1 = __importDefault(require("cors"));
 const isAuth_1 = require("./isAuth");
-const io = require("socket.io")(3003, {
+const app = (0, express_1.default)();
+const http = require("http");
+const server = http.createServer(app);
+const io = require("socket.io")(server, {
     cors: {
         origin: "*",
     },
 });
 const main = async () => {
-    const app = (0, express_1.default)();
     app.use((0, cors_1.default)({
         origin: "*",
     }));
@@ -114,7 +116,7 @@ const main = async () => {
             socket.emit("message-from-server", message);
         });
     });
-    app.listen(process.env.PORT || 3002, () => {
+    server.listen(process.env.PORT || 3002, () => {
         console.log("listening on port 3002");
     });
 };

@@ -12,8 +12,11 @@ import {
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import { isAuth } from "./isAuth";
+const app = express();
+const http = require("http");
+const server = http.createServer(app);
 
-const io = require("socket.io")(3003, {
+const io = require("socket.io")(server, {
   cors: {
     origin: "*",
     // origin: [
@@ -25,7 +28,6 @@ const io = require("socket.io")(3003, {
 });
 
 const main = async () => {
-  const app = express();
   app.use(
     cors({
       origin: "*",
@@ -151,7 +153,7 @@ const main = async () => {
     });
   });
 
-  app.listen(process.env.PORT || 3002, () => {
+  server.listen(process.env.PORT || 3002, () => {
     console.log("listening on port 3002");
   });
 };
