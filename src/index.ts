@@ -149,7 +149,7 @@ const main = async () => {
   io.on("connection", (socket: any) => {
     socket.on("message-from-client", (message: string) => {
       console.log("the message that was sent from client", message);
-      socket.emit("message-from-server", message);
+      socket.broadcast.emit("message-from-server", message);
     });
   });
 
