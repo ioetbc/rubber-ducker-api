@@ -113,7 +113,7 @@ const main = async () => {
     io.on("connection", (socket) => {
         socket.on("message-from-client", (message) => {
             console.log("the message that was sent from client", message);
-            socket.emit("message-from-server", message);
+            socket.broadcast.emit("message-from-server", message);
         });
     });
     server.listen(process.env.PORT || 3002, () => {
