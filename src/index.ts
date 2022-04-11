@@ -171,7 +171,9 @@ const main = async () => {
           content,
         };
         console.log("EMITTING MESSAGE", message);
-        socket.to(toAddress).emit("private-message-server", message);
+        socket
+          .to("williamcoleselfridges")
+          .emit("private-message-server", message);
         // socket.emit("private-message-server", message);
       }
     );
