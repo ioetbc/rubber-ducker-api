@@ -110,10 +110,25 @@ const main = async () => {
     app.get("/", (_, res) => {
         res.send("BOOOOM");
     });
+    io.use((socket, next) => {
+        const username = socket.handshake.auth.username;
+        if (!username) {
+            return next(new Error("invalid socketio username"));
+        }
+        socket.username = username;
+        next();
+    });
     io.on("connection", (socket) => {
-        socket.on("message-from-client", (message) => {
-            console.log("the message that was sent from client", message);
-            socket.broadcast.emit("message-from-server", message);
+        socket.on("private-message-client", ({ content, toAddress }) => {
+            console.log(`private message from from client. username: ${socket.username}`, content);
+            console.log("toAddress + socket.username match???", socket.username === toAddress);
+            const message = {
+                from: socket.username,
+                toAddress,
+                content,
+            };
+            console.log("EMITTING MESSAGE", message);
+            socket.to(toAddress).emit("private-message-server", message);
         });
     });
     server.listen(process.env.PORT || 3002, () => {
