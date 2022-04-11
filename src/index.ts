@@ -56,7 +56,6 @@ const main = async () => {
       res.send({ user: null });
       return;
     }
-    console.log("entered tje me endpoint", token);
 
     if (!userId) {
       res.send({ user: null });
@@ -141,62 +140,16 @@ const main = async () => {
     res.send("BOOOOM");
   });
 
-  // middleware to run each time someone connects
-  io.use((socket: any, next: any) => {
-    const username = socket.handshake.auth.username;
-    if (!username) {
-      return next(new Error("invalid socketio username"));
-    }
-    socket.username = username;
-    next();
-  });
-
   io.on("connection", (socket: any) => {
-    socket.on(
-      "private-message-client",
-      ({ content, toAddress }: { content: string; toAddress: string }) => {
-        console.log(
-          `private message from from client. username: ${socket.username}`,
-          content
-        );
+    socket.on("join-room", (room: string) => {
+      console.log("joing room", room);
+      socket.join(room);
+    });
 
-        console.log(
-          "toAddress + socket.username match???",
-          socket.username === toAddress
-        );
-
-        const message = {
-          from: socket.username,
-          toAddress,
-          content,
-        };
-        console.log("EMITTING MESSAGE", message);
-        socket
-          .to("williamcoleselfridges")
-          .emit("private-message-server", message);
-        // socket.emit("private-message-server", message);
-      }
-    );
+    socket.on("private-message", (message: string, room: string) => {
+      socket.to(room).emit("recieve-message", message);
+    });
   });
-
-  // io.on("connection", (socket: any) => {
-  //   const users = [];
-  //   for (let [id, socket] of io.of("/").sockets) {
-  //     users.push({
-  //       userID: id,
-  //       username: socket.username,
-  //     });
-  //   }
-  //   socket.emit("users", users);
-  //   // ...
-  // });
-
-  // io.on("connection", (socket: any) => {
-  //   socket.on("message-from-client", (message: string) => {
-  //     console.log("the message that was sent from client", message);
-  //     socket.broadcast.emit("message-from-server", message);
-  //   });
-  // });
 
   server.listen(process.env.PORT || 3002, () => {
     console.log("listening on port 3002");

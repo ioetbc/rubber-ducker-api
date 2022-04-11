@@ -45,7 +45,6 @@ const main = async () => {
             res.send({ user: null });
             return;
         }
-        console.log("entered tje me endpoint", token);
         if (!userId) {
             res.send({ user: null });
             return;
@@ -110,27 +109,13 @@ const main = async () => {
     app.get("/", (_, res) => {
         res.send("BOOOOM");
     });
-    io.use((socket, next) => {
-        const username = socket.handshake.auth.username;
-        if (!username) {
-            return next(new Error("invalid socketio username"));
-        }
-        socket.username = username;
-        next();
-    });
     io.on("connection", (socket) => {
-        socket.on("private-message-client", ({ content, toAddress }) => {
-            console.log(`private message from from client. username: ${socket.username}`, content);
-            console.log("toAddress + socket.username match???", socket.username === toAddress);
-            const message = {
-                from: socket.username,
-                toAddress,
-                content,
-            };
-            console.log("EMITTING MESSAGE", message);
-            socket
-                .to("williamcoleselfridges")
-                .emit("private-message-server", message);
+        socket.on("join-room", (room) => {
+            console.log("joing room", room);
+            socket.join(room);
+        });
+        socket.on("private-message", (message, room) => {
+            socket.to(room).emit("recieve-message", message);
         });
     });
     server.listen(process.env.PORT || 3002, () => {
