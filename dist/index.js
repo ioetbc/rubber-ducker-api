@@ -115,6 +115,7 @@ const main = async () => {
             socket.join(room);
         });
         socket.on("private-message", (message, room) => {
+            console.log("private message recieved", message);
             socket.to(room).emit("recieve-message", message);
         });
     });
