@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createReview = exports.createUser = exports.findAllUsers = exports.findTeachers = exports.reviews = exports.findUser = exports.updateUser = void 0;
+exports.createReview = exports.createUser = exports.findAllUsers = exports.findTeachers = exports.reviews = exports.findAllMessages = exports.findConversation = exports.findUser = exports.updateUser = void 0;
 const pg_1 = require("pg");
 const pool = new pg_1.Pool({
     connectionString: process.env.POSTGRES_DB_URL,
@@ -87,6 +87,37 @@ const findUser = async ({ github_id }) => {
         .catch((e) => console.log(e));
 };
 exports.findUser = findUser;
+const findConversation = async ({ github_id, recipient_github_id, }) => {
+    return pool
+        .connect()
+        .then(async (client) => {
+        return client
+            .query("SELECT * FROM messages WHERE github_id = $1 OR recipient = $1 AND github_id = $2 OR recipient = $2", [github_id, recipient_github_id])
+            .then((result) => {
+            client.release();
+            return result.rows[0];
+        });
+    })
+        .catch((e) => console.log(e));
+};
+exports.findConversation = findConversation;
+const findAllMessages = async ({ github_id }) => {
+    return pool
+        .connect()
+        .then(async (client) => {
+        return (client
+            .query(`SELECT * FROM messages
+            WHERE github_id = $1 OR recipient = $1
+            ORDER BY created_at DESC`, [github_id])
+            .then(async (result) => {
+            client.release();
+            console.log("returning these messges", result.rows);
+            return result.rows;
+        }));
+    })
+        .catch((e) => console.log(e));
+};
+exports.findAllMessages = findAllMessages;
 const reviews = async ({ github_id }) => {
     return pool
         .connect()
@@ -128,7 +159,6 @@ const findTeachers = async ({ minStarRating, technologies, maxTeacherPrice, }) =
             LEFT JOIN user_metadata ON technologies.github_id = user_metadata.github_id
             WHERE ${technologies.map((technology) => `${technology.type} >= ${technology.proficency}`)}`.replaceAll(",", " AND "))
             .then(async (result) => {
-            console.log("result nefore", result.rows);
             const filterByPrice = result.rows.filter((user) => {
                 return Number(user.per_hour_rate) <= Number(maxTeacherPrice);
             });
@@ -187,6 +217,11 @@ const createUser = async ({ username, avatar_url, github_id, }) => {
 };
 exports.createUser = createUser;
 const createReview = async ({ review, stars, teacher_id, }) => {
+    console.log({
+        review,
+        stars,
+        teacher_id,
+    });
     return pool
         .connect()
         .then(async (client) => {

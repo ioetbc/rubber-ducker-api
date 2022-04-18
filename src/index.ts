@@ -2,16 +2,17 @@ import "reflect-metadata";
 import express from "express";
 
 import { authenticateUser } from "./utils/authenticateUser";
-import {
-  findUser,
-  findTeachers,
-  reviews,
-  updateUser,
-  createReview,
-} from "./utils/db";
-import jwt from "jsonwebtoken";
-import cors from "cors";
+import { checkUserLoggedIn } from "./routes/checkUserLoggedIn";
+import { getTeachers } from "./routes/findTeachers";
+import { postReview } from "./routes/postReview";
+import { ammendProfile } from "./routes/ammendProfile";
+import { getReviews } from "./routes/getReviews";
+import { getAllUsers } from "./routes/getAllUsers";
+import { getConversation } from "./routes/getConversation";
+import { getAllMessages } from "./routes/getAllMessages";
 import { isAuth } from "./isAuth";
+
+import cors from "cors";
 const app = express();
 const http = require("http");
 const server = http.createServer(app);
@@ -29,116 +30,17 @@ const main = async () => {
     })
   );
   app.use(express.json());
+
   authenticateUser(app);
 
-  app.get("/me", async (req, res) => {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      res.send({ user: null });
-      return;
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    if (!token) {
-      console.log("no token");
-      res.send({ user: null });
-      return;
-    }
-
-    let userId;
-
-    try {
-      const payload: any = jwt.verify(token, process.env.JWT_SECRET);
-      userId = payload.userId;
-    } catch (error) {
-      res.send({ user: null });
-      return;
-    }
-
-    if (!userId) {
-      res.send({ user: null });
-      return;
-    }
-
-    const user = await findUser({ github_id: userId });
-
-    res.send({ user });
-    return;
-  });
-
-  app.post("/findTeachers", isAuth, async (req: any, res) => {
-    const { userId, body } = req;
-    if (!userId) {
-      res.send({ user: null });
-      return;
-    }
-
-    if (body.length < 1) {
-      res.send("No filters");
-      return;
-    }
-
-    const users = await findTeachers({
-      github_id: userId,
-      minStarRating: body.minStarRating,
-      technologies: body.technologies,
-      maxTeacherPrice: body.teacherPrice,
-    });
-
-    res.send(users);
-    return;
-  });
-
-  app.post("/createReview", isAuth, async (req: any, res) => {
-    const { body, query } = req;
-
-    if (!query.teacher_id) {
-      res.send({ user: null });
-      return;
-    }
-
-    const reviews = await createReview({
-      review: body.review,
-      stars: body.stars,
-      teacher_id: query.teacher_id,
-    });
-
-    res.send(reviews);
-    return;
-  });
-
-  app.put("/updateProfile", isAuth, async (req: any, res) => {
-    const { userId, body } = req;
-
-    if (!userId) {
-      res.send({ user: null });
-      return;
-    }
-
-    const users = await updateUser({ body, github_id: userId });
-
-    res.send(users);
-    return;
-  });
-
-  app.get("/reviews", isAuth, async (req: any, res) => {
-    const { query } = req;
-    if (!query.github_id) {
-      res.send({ user: null });
-      return;
-    }
-
-    const userReviews = await reviews({ github_id: query.github_id });
-
-    res.send(userReviews);
-    return;
-  });
-
-  app.get("/", (_, res) => {
-    res.send("BOOOOM");
-  });
+  app.use("/checkUserLoggedIn", checkUserLoggedIn);
+  app.use("/getTeachers", isAuth, getTeachers);
+  app.use("/postReview", isAuth, postReview);
+  app.use("/ammendProfile", isAuth, ammendProfile);
+  app.use("/getReviews", isAuth, getReviews);
+  app.use("/getAllUsers", isAuth, getAllUsers);
+  app.use("/getConversation", isAuth, getConversation);
+  app.use("/getAllMessages", isAuth, getAllMessages);
 
   io.on("connection", (socket: any) => {
     socket.on("join-room", (room: string) => {

@@ -24,7 +24,6 @@ export const isAuth: RequestHandler<{}, any, any, {}> = async (
 
   try {
     const payload: any = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("payload bioth", payload);
     (req as any).userId = payload.userId;
     next();
     return;

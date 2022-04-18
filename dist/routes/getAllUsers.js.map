@@ -1,0 +1,1 @@
+{"version":3,"file":"getAllUsers.js","sourceRoot":"","sources":["../../src/routes/getAllUsers.ts"],"names":[],"mappings":";;;AAAA,oCAA2C;AAEpC,MAAM,WAAW,GAAG,KAAK,EAAE,CAAM,EAAE,GAAQ,EAAE,EAAE;IACpD,MAAM,KAAK,GAAG,MAAM,IAAA,iBAAY,GAAE,CAAC;IAEnC,GAAG,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC;IAChB,OAAO;AACT,CAAC,CAAC;AALW,QAAA,WAAW,eAKtB"}

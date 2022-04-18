@@ -18,7 +18,6 @@ const isAuth = async (req, _, next) => {
     }
     try {
         const payload = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        console.log("payload bioth", payload);
         req.userId = payload.userId;
         next();
         return;
