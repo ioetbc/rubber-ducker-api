@@ -22,8 +22,10 @@ const authenticateUser = (app) => {
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
         callbackURL: "https://ruber-ducker-api.herokuapp.com/auth/github/callback",
     }, async (_, __, profile, done) => {
+        console.log("HE REQUEST???");
         let user = await (0, db_1.findUser)({ github_id: profile.id });
         let userId = profile.id;
+        console.log("checing for ysers");
         if ((0, isEmpty_1.default)(user)) {
             const { username, id } = profile;
             await (0, db_1.createUser)({

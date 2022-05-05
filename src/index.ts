@@ -9,7 +9,8 @@ import { ammendProfile } from "./routes/ammendProfile";
 import { getReviews } from "./routes/getReviews";
 import { getAllUsers } from "./routes/getAllUsers";
 import { getConversation } from "./routes/getConversation";
-import { getAllMessages } from "./routes/getAllMessages";
+import { getMessagePreviews } from "./routes/getMessagePreviews";
+import { postMessage } from "./routes/postMessage";
 import { isAuth } from "./isAuth";
 
 import cors from "cors";
@@ -31,6 +32,7 @@ const main = async () => {
   );
   app.use(express.json());
 
+  console.log("what");
   authenticateUser(app);
 
   app.use("/checkUserLoggedIn", checkUserLoggedIn);
@@ -40,18 +42,39 @@ const main = async () => {
   app.use("/getReviews", isAuth, getReviews);
   app.use("/getAllUsers", isAuth, getAllUsers);
   app.use("/getConversation", isAuth, getConversation);
-  app.use("/getAllMessages", isAuth, getAllMessages);
+  app.use("/getMessagePreviews", isAuth, getMessagePreviews);
+  app.use("/postMessage", isAuth, postMessage);
+
+  io.use((socket: any, next: any) => {
+    const username = socket.handshake.auth.username;
+    if (!username) {
+      return next(new Error("invalid username"));
+    }
+    socket.username = username;
+    next();
+  });
 
   io.on("connection", (socket: any) => {
-    socket.on("join-room", (room: string) => {
-      console.log("joing room", room);
-      socket.join(room);
+    // notify existing users
+    socket.broadcast.emit("user connected", {
+      userID: socket.id,
+      username: socket.username,
+      messages: [],
     });
-
-    socket.on("private-message", (message: string, room: string) => {
-      console.log("private message recieved", message);
-      socket.to(room).emit("recieve-message", message);
-    });
+    socket.on(
+      "private message",
+      ({ content, to }: { content: string; to: string }) => {
+        console.log("got a private content", { content, to });
+        socket.emit("private message", {
+          content,
+          from: socket.id,
+        });
+        // socket.to(to).emit("private message", {
+        //   content,
+        //   from: socket.id,
+        // });
+      }
+    );
   });
 
   server.listen(process.env.PORT || 3002, () => {

@@ -130,22 +130,52 @@ export const findUser = async ({ github_id }: { github_id: string }) => {
 
 export const findConversation = async ({
   github_id,
-  recipient_github_id,
+  teacher_github_id,
 }: {
   github_id: string;
-  recipient_github_id: string;
+  teacher_github_id: string;
 }) => {
+  console.log({ github_id, teacher_github_id });
   return pool
     .connect()
     .then(async (client) => {
       return client
         .query(
-          "SELECT * FROM messages WHERE github_id = $1 OR recipient = $1 AND github_id = $2 OR recipient = $2",
-          [github_id, recipient_github_id]
+          `SELECT * FROM messages
+          LEFT JOIN user_metadata ON messages.github_id = user_metadata.github_id
+          WHERE messages.github_id = $1 OR recipient = $1 AND messages.github_id = $2 OR recipient = $2`,
+          [github_id, teacher_github_id]
         )
         .then((result: any) => {
           client.release();
-          return result.rows[0];
+          return result.rows;
+        });
+    })
+    .catch((e: any) => console.log(e));
+};
+
+export const createMessage = async ({
+  github_id,
+  teacher_github_id,
+  text,
+}: {
+  github_id: string;
+  teacher_github_id: string;
+  text: string;
+}) => {
+  console.log({ github_id, teacher_github_id });
+  return pool
+    .connect()
+    .then(async (client) => {
+      return client
+        .query("INSERT INTO messages VALUES ($1, $2, $3)", [
+          github_id,
+          text,
+          teacher_github_id,
+        ])
+        .then((result: any) => {
+          client.release();
+          return result.rows;
         });
     })
     .catch((e: any) => console.log(e));
@@ -155,21 +185,34 @@ export const findAllMessages = async ({ github_id }: { github_id: string }) => {
   return pool
     .connect()
     .then(async (client) => {
-      return (
-        client
-          // BUG ONLY RETURN ONE ROW PER CONVERSATION
-          .query(
-            `SELECT * FROM messages
-            WHERE github_id = $1 OR recipient = $1
-            ORDER BY created_at DESC`,
-            [github_id]
-          )
-          .then(async (result: any) => {
-            client.release();
-            console.log("returning these messges", result.rows);
-            return result.rows;
-          })
-      );
+      return client
+        .query(
+          `with msgs as (
+              SELECT
+                case when github_id = $1 then recipient
+                else github_id end as teacher_github_id,
+                text,
+                created_at
+              FROM messages WHERE github_id = $1 OR recipient = $1
+              ),
+              rnked as (
+              select
+                teacher_github_id,
+                row_number() over (partition by teacher_github_id order by created_at desc) as rnk,
+                text,
+                created_at,
+                *
+              from msgs
+              LEFT JOIN user_metadata ON teacher_github_id = user_metadata.github_id
+              )
+              select * from rnked where rnk = 1`,
+          [github_id]
+        )
+        .then(async (result: any) => {
+          client.release();
+          console.log("messages", result.rows);
+          return result.rows;
+        });
     })
     .catch((e: any) => console.log(e));
 };
@@ -364,21 +407,3 @@ export const createReview = async ({
     })
     .catch((e: any) => console.error("error creating user", e));
 };
-
-// with msgs as (
-// SELECT
-//   case when github_id = '24758676' then recipient
-//   else github_id end as buddy,
-//   text,
-//   created_at
-// FROM messages WHERE github_id = '24758676' OR recipient = '24758676'
-// ),
-// rnked as (
-// select
-//   buddy,
-//   row_number() over (partition by buddy order by created_at desc) as rnk,
-//   text,
-//   created_at
-// from msgs
-// )
-// select * from rnked where rnk = 1

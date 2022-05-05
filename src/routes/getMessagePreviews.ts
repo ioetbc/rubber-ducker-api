@@ -1,7 +1,6 @@
 import { findAllMessages } from "../utils/db";
 
-export const getAllMessages = async (req: any, res: any) => {
-  console.log("in the new GETALLMESSAGES function");
+export const getMessagePreviews = async (req: any, res: any) => {
   const { userId, body } = req;
   if (!userId) {
     res.send({ user: null });

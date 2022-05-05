@@ -22,9 +22,12 @@ export const authenticateUser = (app: any) => {
           "https://ruber-ducker-api.herokuapp.com/auth/github/callback",
       },
       async (_, __, profile: any, done) => {
+        console.log("HE REQUEST???");
+        // if beta then set the id to peters id
         let user = await findUser({ github_id: profile.id });
 
         let userId = profile.id;
+        console.log("checing for ysers");
         // might want to update the user if it exists e.g. avatar
         if (isEmpty(user)) {
           const { username, id } = profile;

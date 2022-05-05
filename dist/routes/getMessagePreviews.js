@@ -1,9 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getConversation = void 0;
+exports.getMessagePreviews = void 0;
 const db_1 = require("../utils/db");
-const getConversation = async (req, res) => {
-    console.log("in the new function");
+const getMessagePreviews = async (req, res) => {
     const { userId, body } = req;
     if (!userId) {
         res.send({ user: null });
@@ -13,12 +12,12 @@ const getConversation = async (req, res) => {
         res.send("No filters");
         return;
     }
-    const messages = await (0, db_1.findConversation)({
+    const messages = await (0, db_1.findAllMessages)({
         github_id: userId,
-        teacher_github_id: body.teacher_github_id,
     });
+    console.log("gunna return these messages", messages);
     res.send(messages);
     return;
 };
-exports.getConversation = getConversation;
-//# sourceMappingURL=getConversation.js.map
+exports.getMessagePreviews = getMessagePreviews;
+//# sourceMappingURL=getMessagePreviews.js.map

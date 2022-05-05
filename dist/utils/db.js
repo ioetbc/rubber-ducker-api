@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createReview = exports.createUser = exports.findAllUsers = exports.findTeachers = exports.reviews = exports.findAllMessages = exports.findConversation = exports.findUser = exports.updateUser = void 0;
+exports.createReview = exports.createUser = exports.findAllUsers = exports.findTeachers = exports.reviews = exports.findAllMessages = exports.createMessage = exports.findConversation = exports.findUser = exports.updateUser = void 0;
 const pg_1 = require("pg");
 const pool = new pg_1.Pool({
     connectionString: process.env.POSTGRES_DB_URL,
@@ -87,33 +87,71 @@ const findUser = async ({ github_id }) => {
         .catch((e) => console.log(e));
 };
 exports.findUser = findUser;
-const findConversation = async ({ github_id, recipient_github_id, }) => {
+const findConversation = async ({ github_id, teacher_github_id, }) => {
+    console.log({ github_id, teacher_github_id });
     return pool
         .connect()
         .then(async (client) => {
         return client
-            .query("SELECT * FROM messages WHERE github_id = $1 OR recipient = $1 AND github_id = $2 OR recipient = $2", [github_id, recipient_github_id])
+            .query(`SELECT * FROM messages
+          LEFT JOIN user_metadata ON messages.github_id = user_metadata.github_id
+          WHERE messages.github_id = $1 OR recipient = $1 AND messages.github_id = $2 OR recipient = $2`, [github_id, teacher_github_id])
             .then((result) => {
             client.release();
-            return result.rows[0];
+            return result.rows;
         });
     })
         .catch((e) => console.log(e));
 };
 exports.findConversation = findConversation;
+const createMessage = async ({ github_id, teacher_github_id, text, }) => {
+    console.log({ github_id, teacher_github_id });
+    return pool
+        .connect()
+        .then(async (client) => {
+        return client
+            .query("INSERT INTO messages VALUES ($1, $2, $3)", [
+            github_id,
+            text,
+            teacher_github_id,
+        ])
+            .then((result) => {
+            client.release();
+            return result.rows;
+        });
+    })
+        .catch((e) => console.log(e));
+};
+exports.createMessage = createMessage;
 const findAllMessages = async ({ github_id }) => {
     return pool
         .connect()
         .then(async (client) => {
-        return (client
-            .query(`SELECT * FROM messages
-            WHERE github_id = $1 OR recipient = $1
-            ORDER BY created_at DESC`, [github_id])
+        return client
+            .query(`with msgs as (
+              SELECT
+                case when github_id = $1 then recipient
+                else github_id end as teacher_github_id,
+                text,
+                created_at
+              FROM messages WHERE github_id = $1 OR recipient = $1
+              ),
+              rnked as (
+              select
+                teacher_github_id,
+                row_number() over (partition by teacher_github_id order by created_at desc) as rnk,
+                text,
+                created_at,
+                *
+              from msgs
+              LEFT JOIN user_metadata ON teacher_github_id = user_metadata.github_id
+              )
+              select * from rnked where rnk = 1`, [github_id])
             .then(async (result) => {
             client.release();
-            console.log("returning these messges", result.rows);
+            console.log("messages", result.rows);
             return result.rows;
-        }));
+        });
     })
         .catch((e) => console.log(e));
 };

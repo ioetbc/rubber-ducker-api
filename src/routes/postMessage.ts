@@ -1,6 +1,6 @@
-import { findConversation } from "../utils/db";
+import { createMessage } from "../utils/db";
 
-export const getConversation = async (req: any, res: any) => {
+export const postMessage = async (req: any, res: any) => {
   console.log("in the new function");
   const { userId, body } = req;
   if (!userId) {
@@ -13,9 +13,10 @@ export const getConversation = async (req: any, res: any) => {
     return;
   }
 
-  const messages = await findConversation({
+  const messages = await createMessage({
     github_id: userId,
     teacher_github_id: body.teacher_github_id,
+    text: body.message,
   });
 
   res.send(messages);

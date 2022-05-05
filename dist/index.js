@@ -13,7 +13,8 @@ const ammendProfile_1 = require("./routes/ammendProfile");
 const getReviews_1 = require("./routes/getReviews");
 const getAllUsers_1 = require("./routes/getAllUsers");
 const getConversation_1 = require("./routes/getConversation");
-const getAllMessages_1 = require("./routes/getAllMessages");
+const getMessagePreviews_1 = require("./routes/getMessagePreviews");
+const postMessage_1 = require("./routes/postMessage");
 const isAuth_1 = require("./isAuth");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
@@ -29,6 +30,7 @@ const main = async () => {
         origin: "*",
     }));
     app.use(express_1.default.json());
+    console.log("what");
     (0, authenticateUser_1.authenticateUser)(app);
     app.use("/checkUserLoggedIn", checkUserLoggedIn_1.checkUserLoggedIn);
     app.use("/getTeachers", isAuth_1.isAuth, findTeachers_1.getTeachers);
@@ -37,15 +39,28 @@ const main = async () => {
     app.use("/getReviews", isAuth_1.isAuth, getReviews_1.getReviews);
     app.use("/getAllUsers", isAuth_1.isAuth, getAllUsers_1.getAllUsers);
     app.use("/getConversation", isAuth_1.isAuth, getConversation_1.getConversation);
-    app.use("/getAllMessages", isAuth_1.isAuth, getAllMessages_1.getAllMessages);
+    app.use("/getMessagePreviews", isAuth_1.isAuth, getMessagePreviews_1.getMessagePreviews);
+    app.use("/postMessage", isAuth_1.isAuth, postMessage_1.postMessage);
+    io.use((socket, next) => {
+        const username = socket.handshake.auth.username;
+        if (!username) {
+            return next(new Error("invalid username"));
+        }
+        socket.username = username;
+        next();
+    });
     io.on("connection", (socket) => {
-        socket.on("join-room", (room) => {
-            console.log("joing room", room);
-            socket.join(room);
+        socket.broadcast.emit("user connected", {
+            userID: socket.id,
+            username: socket.username,
+            messages: [],
         });
-        socket.on("private-message", (message, room) => {
-            console.log("private message recieved", message);
-            socket.to(room).emit("recieve-message", message);
+        socket.on("private message", ({ content, to }) => {
+            console.log("got a private content", { content, to });
+            socket.emit("private message", {
+                content,
+                from: socket.id,
+            });
         });
     });
     server.listen(process.env.PORT || 3002, () => {
